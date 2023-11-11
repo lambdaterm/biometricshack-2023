@@ -1,0 +1,8 @@
+venv
+.idea
+*.mp4
+*.MOV
+spoofing-hackaton.pdf
+threshold.jpg
+transfer.PNG
+finetuning.PNG
