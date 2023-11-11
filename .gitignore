@@ -6,3 +6,6 @@ spoofing-hackaton.pdf
 threshold.jpg
 transfer.PNG
 finetuning.PNG
+android-demo/.gradle/
+android-demo/.idea/
+*.jar

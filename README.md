@@ -7,3 +7,6 @@
 Демонстрация работы демо-приложения [здесь](https://youtube.com/shorts/vsC2DxQOxD4) и [здесь](https://www.youtube.com/shorts/rBbd7_Hm_Hw).
 
 Демонстрация работоспособности при запуске на компьютере [здесь](https://www.youtube.com/watch?v=qOsLyiA3Uv8).
+
+Исходный код мобильного приложения находится в каталоге `android-demo` и основан на
+репозитории https://github.com/IJ-Apps/Image-Classification-App-with-Custom-TensorFlow-Model.
