@@ -40,7 +40,7 @@ if __name__ == '__main__':
     print('Models for Spoofing detection initialization ...')
     model_init_time = time.time()
     model_small = Antispoofing('models/model_224.onnx', 0.9, (224, 224))
-    model_big = Antispoofing('models/model_900.onnx', 0.9, (900, 900))
+    model_big = Antispoofing('models/model_900.onnx', 0.2, (900, 900))
     model_dolls = Antispoofing('models/model_doll_224.onnx', 0.9, (224, 224))
     print(f'Models initialized in  {round(time.time() - model_init_time, 4)} sec')
     ###
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # cap.set(3, 900)
     # cap.set(4, 900)
     # Забираем видео с web камеры
-    web_cam_screen_size = (800, 600)
+    web_cam_screen_size = (1920, 1080)
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     cap.set(3, web_cam_screen_size[0])
     cap.set(4, web_cam_screen_size[0])
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         post_processed_result = postprocess_prediction(result, model_small.threshold)
         print(('Small:', post_processed_result))
         ###
-        tensor = model_big.load_single_image(original_frame)
+        tensor = model_big.load_single_image(original_frame, is_center_crop=False)
         result = model_big.run_model(tensor)
         post_processed_result_for_big_tensor = postprocess_prediction(result, model_big.threshold)
         print(('Big:  ', post_processed_result_for_big_tensor))
