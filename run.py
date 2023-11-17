@@ -30,15 +30,16 @@ def run_model(model_session: ort.InferenceSession, input_tensor: np.ndarray) -> 
     return result
 
 
-def load_single_image(image_path: str) -> np.ndarray:
+def load_single_image(image_path: str, size: tuple) -> np.ndarray:
     """
     Load image and perform preprocessing
+    :param size:
     :param image_path: path to the test image
     :return: tensor suitable for cnn inference
     """
     image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = cv2.resize(image, (224, 224)).astype(np.float32)
+    image = cv2.resize(image, size).astype(np.float32)
     image = np.expand_dims(image, 0)
     return image
 
@@ -53,10 +54,18 @@ def postprocess_prediction(raw_predition: float, threshold: float) -> int:
 
 
 if __name__ == '__main__':
-    print('start')
-    sess = load_model('model.onnx')
+    print('Start model with small tensors testing ...')
+    sess = load_model('models/model_224.onnx')
     for i in os.listdir(DATA_DIR):
-        tens = load_single_image(os.path.join(DATA_DIR, i))
+        tens = load_single_image(os.path.join(DATA_DIR, i), (224, 224))
         prediction = run_model(sess, tens)
         print(f'{i}, {prediction}, {postprocess_prediction(prediction, 0.9249477386474609)}')
-    print('done')
+    print('Done')
+
+    print('Start model with big tensors testing ...')
+    sess = load_model('models/model_900.onnx')
+    for i in os.listdir(DATA_DIR):
+        tens = load_single_image(os.path.join(DATA_DIR, i), (900, 900))
+        prediction = run_model(sess, tens)
+        print(f'{i}, {prediction}, {postprocess_prediction(prediction, 0.5)}')
+    print('Done')

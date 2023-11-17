@@ -35,14 +35,16 @@ def run_model(model_session: ort.InferenceSession, input_tensor: np.ndarray) -> 
     return result
 
 
-def load_single_image(image: np.ndarray) -> np.ndarray:
+def load_single_image(image: np.ndarray, size: tuple) -> np.ndarray:
     """
     Load image and perform preprocessing
+    :param image:
+    :param size:
     :param image_path: path to the test image
     :return: tensor suitable for cnn inference
     """
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = cv2.resize(image, (224, 224)).astype(np.float32)
+    image = cv2.resize(image, size).astype(np.float32)
     image = np.expand_dims(image, 0)
     return image
 
@@ -175,10 +177,12 @@ if __name__ == '__main__':
     face_detector = vision.FaceDetector.create_from_options(options_face)
     print(f'Detector initialized in {round(time.time() - face_detector_init_time, 4)} sec')
     ###
-    print('Model for Spoofing detection initialization ...')
+    print('Models for Spoofing detection initialization ...')
     model_init_time = time.time()
-    sess = load_model('model.onnx')
-    print(f'Model initialized in  {round(time.time() - model_init_time, 4)} sec')
+    sess_small = load_model('models/model_224.onnx')
+    sess_big = load_model('models/model_900.onnx')
+    sess_dolls = load_model('models/model_doll_224.onnx')
+    print(f'Models initialized in  {round(time.time() - model_init_time, 4)} sec')
     ###
     # Забираем видео из видео потока
     # cap = cv2.VideoCapture('IMG_3728.MOV')
@@ -216,10 +220,21 @@ if __name__ == '__main__':
         print(f'Frame_size = {frame.shape}')
         # frame = cv2.resize(frame, (900, 900))
         ###
-
-        tensor = load_single_image(original_frame)
-        result = run_model(sess, tensor)
+        tensor = load_single_image(original_frame, (224, 224))
+        result = run_model(sess_small, tensor)
         post_processed_result = postprocess_prediction(result, 0.5)
+        print(('Small:', post_processed_result))
+        ###
+        tensor = load_single_image(original_frame, (900, 900))
+        result = run_model(sess_big, tensor)
+        post_processed_result_for_big_tensor = postprocess_prediction(result, 0.5)
+        print(('Big:  ', post_processed_result_for_big_tensor))
+        ###
+        tensor = load_single_image(original_frame, (224, 224))
+        result = run_model(sess_dolls, tensor)
+        post_processed_result_for_dolls = postprocess_prediction(result, 0.9)
+        print(('Doll:  ', post_processed_result_for_dolls))
+        ###
 
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
         detection_result = detector.detect(image)
@@ -229,7 +244,11 @@ if __name__ == '__main__':
             else:
                 print_color = (0, 0, 255)
 
-            cv2.putText(frame, f'{post_processed_result[1]}', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, print_color, 2, cv2.LINE_AA)
+            cv2.putText(frame, f'Small = {post_processed_result[1]}', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, print_color, 2, cv2.LINE_AA)
+            cv2.putText(frame, f'Big   = {post_processed_result_for_big_tensor[1]}', (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, print_color, 2,
+                        cv2.LINE_AA)
+            cv2.putText(frame, f'Doll   = {post_processed_result_for_dolls[1]}', (50, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, print_color, 2,
+                        cv2.LINE_AA)
             cv2.rectangle(frame, (0, 0), web_cam_screen_size, color=print_color, thickness=30)
             face_detection_result_bool = 0
 
