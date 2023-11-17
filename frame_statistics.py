@@ -98,9 +98,12 @@ if __name__ == '__main__':
 
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
         detection_result = landmarker.detector.detect(image)
+        # print_color is in BGR notation
         if detection_result.face_landmarks:
-            if post_processed_result[0]:
+            if post_processed_result[0] and post_processed_result_for_big_tensor[0]:
                 print_color = (0, 255, 0)
+            elif post_processed_result[0] or post_processed_result_for_big_tensor[0]:
+                print_color = (0, 255, 255)
             else:
                 print_color = (0, 0, 255)
 
