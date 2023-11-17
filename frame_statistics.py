@@ -1,5 +1,5 @@
 import copy
-
+import time
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import numpy as np
@@ -47,13 +47,13 @@ def load_single_image(image: np.ndarray) -> np.ndarray:
     return image
 
 
-def postprocess_prediction(raw_predition: float, threshold: float) -> int:
+def postprocess_prediction(raw_predition: float, threshold: float) -> tuple:
     """
     Convert float value to an int-encoded label with threshold
     :param raw_predition:
     :return: 1 if input is REAL, 0 otherwise
     """
-    return 1 if (raw_predition > threshold) else 0
+    return (1, 'Real', raw_predition) if (raw_predition > threshold) else (0, 'Fake', raw_predition)
 
 
 def _normalized_to_pixel_coordinates(
@@ -160,60 +160,94 @@ def plot_face_blendshapes_bar_graph(face_blendshapes):
 
 
 if __name__ == '__main__':
+
+    ###
+    print('Face detector initialization ...')
+    face_detector_init_time = time.time()
     base_options = python.BaseOptions(model_asset_path='face_landmarker.task')
     options = vision.FaceLandmarkerOptions(base_options=base_options,
                                            output_face_blendshapes=True,
                                            output_facial_transformation_matrixes=True,
                                            num_faces=1)
     detector = vision.FaceLandmarker.create_from_options(options)
-
     base_options_face = python.BaseOptions(model_asset_path='blaze_face_short_range.tflite')
     options_face = vision.FaceDetectorOptions(base_options=base_options_face)
     face_detector = vision.FaceDetector.create_from_options(options_face)
-
+    print(f'Detector initialized in {round(time.time() - face_detector_init_time, 4)} sec')
+    ###
+    print('Model for Spoofing detection initialization ...')
+    model_init_time = time.time()
     sess = load_model('model.onnx')
-
+    print(f'Model initialized in  {round(time.time() - model_init_time, 4)} sec')
+    ###
+    # Забираем видео из видео потока
     # cap = cv2.VideoCapture('IMG_3728.MOV')
-    cap = cv2.VideoCapture(0)
+    # Забираем видео с мобильного телефона
+    # cap = cv2.VideoCapture('http://172.16.74.154:8080/video', cv2.CAP_ANY)
+    # cap.set(3, 900)
+    # cap.set(4, 900)
+    # Забираем видео с web камеры
+    web_cam_screen_size = (800, 600)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cap.set(3, web_cam_screen_size[0])
+    cap.set(4, web_cam_screen_size[0])
+    ###
+    frames = 0
+    fps = 0
+    frame_time = time.time()
+    frame_time_in_sec = 0
     while cap.isOpened():
+
+        ###
+        frame_time = time.time() - frame_time
+        frame_time_in_sec = frame_time_in_sec + frame_time
+        frames += 1
+        if frame_time_in_sec > 1:
+            frame_time_in_sec = 0
+            fps = frames
+            frames = 0
+        if fps != 0:
+            print(f'fps = {fps} Frame performing time = {str(int(frame_time * 1000))} ms')
+        frame_time = time.time()
+
+        ###
         ret, frame = cap.read()
+        original_frame = frame.copy()
+        print(f'Frame_size = {frame.shape}')
+        # frame = cv2.resize(frame, (900, 900))
+        ###
 
-        resized = cv2.resize(frame, (500, 500))
+        tensor = load_single_image(original_frame)
+        result = run_model(sess, tensor)
+        post_processed_result = postprocess_prediction(result, 0.5)
 
-        t = load_single_image(resized)
-        pred = run_model(sess, t)
-        formatted = postprocess_prediction(pred, 0.5)
-
-        image = mp.Image(image_format=mp.ImageFormat.SRGB, data=resized)
-
+        image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
         detection_result = detector.detect(image)
+        if detection_result.face_landmarks:
+            if post_processed_result[0]:
+                print_color = (0, 255, 0)
+            else:
+                print_color = (0, 0, 255)
+
+            cv2.putText(frame, f'{post_processed_result[1]}', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, print_color, 2, cv2.LINE_AA)
+            cv2.rectangle(frame, (0, 0), web_cam_screen_size, color=print_color, thickness=30)
+            face_detection_result_bool = 0
+
         face_detection_result = face_detector.detect(image)
-
         image_copy = np.copy(image.numpy_view())
-        face_annotated_image = visualize(image_copy, face_detection_result)
-
         annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
 
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
-
-        det_img = copy.deepcopy(resized)
-
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        if formatted:
-            cv2.putText(det_img, f'{formatted}', (50, 50), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
-            cv2.rectangle(det_img, (0, 0), (500, 500), color=(0, 255, 0), thickness=30)
+        if post_processed_result[0]:
+            print(f'Face is {post_processed_result[1]} with confidence {post_processed_result[2]}')
         else:
-            cv2.putText(det_img, f'{formatted}', (50, 50), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
-            cv2.rectangle(det_img, (0, 0), (500, 500), color=(0, 0, 255), thickness=30)
+            print(f'Face is {post_processed_result[1]} with confidence {1-post_processed_result[2]}')
+        horizontal_line = cv2.hconcat([annotated_image, frame])
+        cv2.imshow("Camera", horizontal_line)
 
-        hor1 = cv2.hconcat([resized, annotated_image])
-        hor2 = cv2.hconcat([det_img, face_annotated_image])
-        cv2.imshow('frame', cv2.vconcat([hor1, hor2]))
-
-        cv2.waitKey(1)
-        if cv2.waitKey(1) == ord('q'):
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
             break
+
+    cv2.waitKey(0)
     cap.release()
     cv2.destroyAllWindows()
