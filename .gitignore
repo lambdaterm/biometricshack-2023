@@ -8,4 +8,8 @@ transfer.PNG
 finetuning.PNG
 android-demo/.gradle/
 android-demo/.idea/
+
+antispoofing/__pycache__
+face_detector/__pycache__
+landmarker/__pycache__
 *.jar
