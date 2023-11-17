@@ -39,8 +39,8 @@ if __name__ == '__main__':
     ###
     print('Models for Spoofing detection initialization ...')
     model_init_time = time.time()
-    model_small = Antispoofing('models/model_224.onnx', 0.5, (224, 224))
-    model_big = Antispoofing('models/model_900.onnx', 0.5, (900, 900))
+    model_small = Antispoofing('models/model_224.onnx', 0.9, (224, 224))
+    model_big = Antispoofing('models/model_900.onnx', 0.9, (900, 900))
     model_dolls = Antispoofing('models/model_doll_224.onnx', 0.9, (224, 224))
     print(f'Models initialized in  {round(time.time() - model_init_time, 4)} sec')
     ###
@@ -82,17 +82,17 @@ if __name__ == '__main__':
         ###
         tensor = model_small.load_single_image(original_frame)
         result = model_small.run_model(tensor)
-        post_processed_result = postprocess_prediction(result, 0.5)
+        post_processed_result = postprocess_prediction(result, model_small.threshold)
         print(('Small:', post_processed_result))
         ###
         tensor = model_big.load_single_image(original_frame)
         result = model_big.run_model(tensor)
-        post_processed_result_for_big_tensor = postprocess_prediction(result, 0.5)
+        post_processed_result_for_big_tensor = postprocess_prediction(result, model_big.threshold)
         print(('Big:  ', post_processed_result_for_big_tensor))
         ###
         tensor = model_dolls.load_single_image(original_frame)
         result = model_dolls.run_model( tensor)
-        post_processed_result_for_dolls = postprocess_prediction(result, 0.9)
+        post_processed_result_for_dolls = postprocess_prediction(result, model_dolls.threshold)
         print(('Doll:  ', post_processed_result_for_dolls))
         ###
 
