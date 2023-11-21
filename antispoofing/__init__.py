@@ -1,1 +1,1 @@
-from .antispoofing import Antispoofing
+from .antispoofing import AntiSpoofing, AntiSpoofingCosine
