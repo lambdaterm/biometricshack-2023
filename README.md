@@ -10,3 +10,10 @@
 
 Исходный код мобильного приложения находится в каталоге `android-demo` и основан на
 репозитории https://github.com/IJ-Apps/Image-Classification-App-with-Custom-TensorFlow-Model.
+
+Примеры работы на языке Python в файлах:
+run.py
+frame_statistics.py
+
+Пример работы с докером в Dockerfile
+

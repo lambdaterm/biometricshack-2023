@@ -102,7 +102,7 @@ if __name__ == '__main__':
             tensor = model_cosine.load_single_image(original_frame, is_center_crop=False)
             result = model_cosine.run_model(tensor)
             result_for_cosine, result_for_cosine_as_text = model_cosine.postprocess_prediction_as_text(result)
-            print(('Big:  ', result))
+            print(('Cosine:  ', result))
             ###
             tensor = model_dolls.load_single_image(original_frame, is_center_crop=True)
             result = model_dolls.run_model(tensor)
