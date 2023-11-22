@@ -99,7 +99,7 @@ if __name__ == '__main__':
             post_processed_result_for_big_tensor = postprocess_prediction(result, model_big.threshold)
             print(('Big:  ', post_processed_result_for_big_tensor))
             ###
-            tensor = model_cosine.load_single_image(original_frame, is_center_crop=False)
+            tensor = model_cosine.load_single_image(original_frame, is_center_crop=True)
             result = model_cosine.run_model(tensor)
             result_for_cosine, result_for_cosine_as_text = model_cosine.postprocess_prediction_as_text(result)
             print(('Cosine:  ', result))

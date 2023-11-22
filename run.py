@@ -73,7 +73,7 @@ if __name__ == '__main__':
     print('Start model with cosine tensors testing ...')
     model_cosine = AntiSpoofingCosine('models/model_cosine_224.onnx', (224, 224))
     for i in os.listdir(DATA_DIR):
-        tens = model_cosine.load_single_image(os.path.join(DATA_DIR, i))
+        tens = model_cosine.load_single_image(os.path.join(DATA_DIR, i), is_center_crop=True)
         prediction = model_cosine.run_model(tens)
         print(
             f'File name = {i}, Class confidences = {prediction}, Is real face = {bool(model_cosine.postprocess_prediction(prediction))}')
